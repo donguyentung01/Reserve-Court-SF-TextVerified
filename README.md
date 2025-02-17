@@ -8,7 +8,7 @@ You need to have an existing account with [rec.us](https://www.rec.us/). As of F
 
 You also need to create a Twilio virtual number, so that you can set up a Shortcuts automation task on your registered iPhone number to forward the text verification code, which is required for every court reservation, to the Twilio number. The text on your Twilio number is then retrieved by the Python script.
 
-Here is the Shortcuts automation task setup you need to do: 
+Here is the recommended Shortcuts automation task setup: 
 
 
 <img src="https://github.com/user-attachments/assets/d5562b2e-7d19-40d6-802d-574830293341" width="300" />
