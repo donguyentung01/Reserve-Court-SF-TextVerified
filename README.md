@@ -10,8 +10,8 @@ You also need to create a Twilio virtual number, so that you can set up a Shortc
 
 Here is the Shortcuts automation task setup you need to do: 
 
-![IMG_0890](https://github.com/user-attachments/assets/f1a37212-3464-444f-85c8-91dc81f53ffe)
-![IMG_0889](https://github.com/user-attachments/assets/8fde10fe-5fa5-4a83-bd47-d518e33f162f)
+<img src="https://github.com/user-attachments/assets/8fde10fe-5fa5-4a83-bd47-d518e33f162f" width="300" />
+<img src="https://github.com/user-attachments/assets/f1a37212-3464-444f-85c8-91dc81f53ffe" width="300" />
 
 
 ## How to run
