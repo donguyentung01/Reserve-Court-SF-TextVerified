@@ -24,7 +24,6 @@ COPY . /app
 
 # Set the environment variable to use Chromium
 
-RUN chmod +x /app/chromedriver 
 # Command to run the Python script
 ENTRYPOINT ["python3", "main.py"]
 
