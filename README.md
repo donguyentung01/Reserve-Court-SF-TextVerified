@@ -1,4 +1,4 @@
-# reservePickleball
+# Reserve Court SF
 
 A Python script to reserve tennis/pickleball courts in [San Francisco](https://www.rec.us/organizations/san-francisco-rec-park). 
 
