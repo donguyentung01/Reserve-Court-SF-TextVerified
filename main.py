@@ -9,7 +9,8 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--date', type=str, required=True, help="Date, e.g. 2025-01-10") 
     parser.add_argument('-l', '--slot', type=str, default='morning,afternoon,evening', help="Time slot, either morning, afternoon, or evening. You can also chain time slots with comma as a separator, like 'morning,afternoon'")
     parser.add_argument('-s', '--sport', type=str, required=True, help="Sport, either pickleball or tennis") 
-    parser.add_argument('-t', '--time', type=str, required=True, help = "Time, e.g. 1:00 PM") 
+    parser.add_argument('-t', '--starttime', type=str, required=True, help = "Time, e.g. 09:00:00") 
+    parser.add_argument('-y', '--endtime', type=str, required=True, help = "Time, e.g. 10:00:00") 
     parser.add_argument('-e', '--email', type=str, required=True, help="Your rec.us email")
     parser.add_argument('-p', '--password', type=str, required=True, help="Your rec.us password") 
     parser.add_argument('-n', '--phone', type=str, required=True, help="Twilio phone number")
@@ -18,13 +19,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    court, time, email, password, phone_number, sid, auth_token, date, sport, slot = (
-        args.court, args.time, args.email, args.password, args.phone, args.sid, args.authtoken, args.date, args.sport, args.slot
+    court, start_time, end_time, email, password, phone_number, sid, auth_token, date, sport, slot = (
+        args.court, args.starttime, args.endtime, args.email, args.password, args.phone, args.sid, args.authtoken, args.date, args.sport, args.slot
     )
 
     if sport not in ("pickleball", "tennis"): 
         print("Sport must be either 'pickleball' or 'tennis'") 
         sys.exit(1)
 
-    book_court(court, date, sport, time, email, password, sid, auth_token, phone_number, slot) 
+    book_court(court, date, sport, start_time, end_time, email, password, sid, auth_token, phone_number, slot) 
 

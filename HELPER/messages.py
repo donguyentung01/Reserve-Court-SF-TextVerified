@@ -43,7 +43,7 @@ def get_code(account_sid, auth_token, phone_number, timeout=30, poll_interval=1,
         # Check if the timeout has been reached
         if time.time() - start_time > timeout:
             print("Timeout reached. No valid message received within the specified time frame.")
-            return None
+            return -1  
         
         # Wait for the specified polling interval before checking again
         time.sleep(poll_interval)
