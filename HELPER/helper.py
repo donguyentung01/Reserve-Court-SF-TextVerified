@@ -13,6 +13,7 @@ import sys
 import time as t
 import requests
 import json
+import concurrent.futures
 
 def wait_for_target_time(target_timestamp, sleep_itvl=0.1):
     #target_timestamp = "2025-03-05 5:40:00"
@@ -127,59 +128,6 @@ def make_payment_request(url, headers):
             return f"Failed to make request. Status code: {response.status_code}. Response text: {response.text}"
     except requests.exceptions.RequestException as e:
         return f"An error occurred: {e}"
-    
-def get_verification_code_preemptively_day(driver, twilio_account_sid, twilio_auth_token, twilio_phone_number, current_date): 
-    print(f"Getting verification code preemptively on {current_date}")
-    driver.get(f'https://www.rec.us/organizations/san-francisco-rec-park?tab=locations&date={current_date}')
-
-    try:
-    # Wait until the paragraph with time is visible
-        potential_timeslot = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//p[contains(text(),'0 AM') or contains(text(),'0 PM')]"))   
-        )
-        potential_timeslot.click()
-        finalize_booking(driver) 
-        send_code(driver) 
-        verification_code = get_code(twilio_account_sid, twilio_auth_token, twilio_phone_number)
-        if verification_code != -1:
-            return verification_code
-        return -1
-    except Exception as e:
-        print(e)
-        return -1 
-
-def get_verification_code_preemptively_multiday(driver, twilio_account_sid, twilio_auth_token, twilio_phone_number, start_date=datetime.today().strftime("%Y-%m-%d"), number_of_days=7):
-    print("Getting verification code preemptively")
-    start_date_obj = datetime.strptime(start_date, "%Y-%m-%d")
-
-# Loop through the next 7 days including today
-    for i in range(number_of_days):
-        day = start_date_obj + timedelta(days=i)
-        day_string = day.strftime("%Y-%m-%d")
-        verification_code = get_verification_code_preemptively_day(driver, twilio_account_sid, twilio_auth_token, twilio_phone_number, day_string)
-        if verification_code != -1:
-            return verification_code
-
-    return -1 
-
-def open_booking_court_time(driver, court, time): 
-    try:
-        WebDriverWait(driver, 10).until(
-            lambda driver: len(driver.find_elements(By.XPATH, f"//p[contains(text(),'{court}')]/ancestor::div[4]")) > 0 
-        )
-        ancestor_element = driver.find_element(By.XPATH, f"//p[contains(text(),'{court}')]/ancestor::*[4]") 
-        button = ancestor_element.find_element(By.XPATH, f".//button[p[starts-with(text(),'{time}')]]")
-        driver.execute_script("arguments[0].click();", button)
-
-        WebDriverWait(driver, 10).until(
-            lambda driver: len(driver.find_elements(By.XPATH, "//button[contains(text(),'Book')]")) > 0
-        )
-        book = driver.find_elements(By.XPATH, "//button[contains(text(),'Book')]")[0]
-        book.click()
-    except Exception as e:
-        print(f"Error: {e}")
-        print("Error: Failed at opening booking at court/time")
-        sys.exit(1)
 
 def log_in(driver, email, password): 
     try:
@@ -202,41 +150,6 @@ def log_in(driver, email, password):
     except Exception as e:
         print(f"Error: {e}")
         print("Error: Failed at login")
-        sys.exit(1)
-
-def finalize_booking(driver): 
-    try: 
-        print("Open booking information, e.g. participant, court, etc")
-        p = WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.XPATH, "//p[text()='Select participant']"))
-        )
-        p.click()
-
-        account_owner = WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.XPATH, "//small[text()='Account Owner']"))
-        )
-
-        account_owner.click()
-        book = WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.XPATH, "//button[contains(text(),'Book')]"))
-        )
-        
-        book.click()
-    except Exception as e: 
-        print(f"Error: {e}")
-        print("Error: Failed at finalizing booking")
-        sys.exit(1)
-
-def send_code(driver): 
-    try: 
-        print("Asking for confirmation code")
-        send_code = WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.XPATH, "//button[contains(text(),'Send Code')]"))
-        )
-        send_code.click()
-    except Exception as e: 
-        print(f"Error: {e}")
-        print("Error: Failed at sending code step")
         sys.exit(1)
 
 def get_court_href(driver, court):
@@ -279,6 +192,20 @@ def make_user_profile_request(headers, url="https://api.rec.us/v1/users/househol
         print(f"Request failed with status code: {response.status_code}")
         return None 
 
+def reserve_court_single_thread(court_id, user_id, date, start_time, end_time, headers):
+    job_begin_time = t.time()
+    response = make_reservation_request(headers, court_id, user_id, date, start_time, end_time)
+    
+    if "order" in response:
+        order_id = response["order"]["id"]
+        payment_status = make_payment_request(f"https://api.rec.us/v1/orders/{order_id}/pay", headers)
+        
+        if payment_status["data"]["status"] == "succeeded":
+            print(f"Successfully reserved court {court_id} from {start_time} to {end_time}")
+            job_end_time = t.time()
+            print(f"Reservation job for court {court_id} took {job_end_time - job_begin_time} seconds.")
+            return True
+    return False
 def book_court(court, date, sport, start_time, end_time, email, password, twilio_account_sid, twilio_auth_token, twilio_phone_number, slot, target_time=f"{datetime.today().strftime('%Y-%m-%d')} 12:00:00"): 
     sports_URL_code = {
         "pickleball": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
@@ -307,8 +234,20 @@ def book_court(court, date, sport, start_time, end_time, email, password, twilio
     verification_code = get_code(twilio_account_sid, twilio_auth_token, twilio_phone_number) 
 
     wait_for_target_time(target_time)    
-    job_begin_time = t.time()
     make_verification_request(verification_code, headers)
+    
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = []
+        for court_id in all_court_ids:
+            futures.append(executor.submit(reserve_court_single_thread, court_id, user_id, date, start_time, end_time, headers))
+
+        # Wait for all futures to complete
+        for future in concurrent.futures.as_completed(futures):
+            if future.result():  # If reservation was successful
+                driver.quit()
+                sys.exit(0)
+    '''
+    job_begin_time = t.time()
     for court_id in all_court_ids:
         response = make_reservation_request(headers, court_id, user_id, date, start_time, end_time)
         if "order" in response: 
@@ -319,37 +258,8 @@ def book_court(court, date, sport, start_time, end_time, email, password, twilio
                 job_end_time = t.time()
                 print(f"Reservation job takes {job_end_time - job_begin_time} seconds.")
                 sys.exit(0)
+    '''
     print(f"Couldn't reserve the court")
-
-
-    #t.sleep(1)
-    #preemptive_verification_code_target_time_obj = datetime.strptime(target_time, "%Y-%m-%d %H:%M:%S") - timedelta(minutes=1)
-    #preemptive_verification_code_target_time = preemptive_verification_code_target_time_obj.strftime("%Y-%m-%d %H:%M:%S")
-
-    #wait_for_target_time(preemptive_verification_code_target_time) # wait for 1 minute before court opens to get verification code preemptively
-    #preemptive_verification_code = get_verification_code_preemptively_multiday(driver, twilio_account_sid, twilio_auth_token, twilio_phone_number)
-
-    #headers = getHeaders(driver) 
-    #print(headers)
-    #print(make_send_verification_code_request(headers))
-    #verification_code = get_code(twilio_account_sid, twilio_auth_token, twilio_phone_number) 
-    #print(make_verification_request(verification_code, headers))
-    #response = make_reservation_request(headers)
-    #print(response)
-    #order_id = response["order"]["id"]
-    #print(make_payment_request(f"https://api.rec.us/v1/orders/{order_id}/pay", headers))
-
-    #preemptive_verification_code = get_verification_code_preemptively_multiday(driver, twilio_account_sid, twilio_auth_token, twilio_phone_number)
-    #print(f"Successfully got verification code preemptively: {preemptive_verification_code}")
-
-    #wait_for_target_time(target_time)
-    #driver.get(f"https://www.rec.us/organizations/san-francisco-rec-park?tab=locations&date={date}&time={slot}&sports={sports_URL_code[sport]}")
-    #make_verification_request(driver, "https://api.rec.us/v1/users/mobile-totp/verify", preemptive_verification_code)
-    #response = make_reservation_request(driver, "https://api.rec.us/v1/reservations")
-    #order_id = response["order"]["id"]
-    #print(make_payment_request(driver, f"https://api.rec.us/v1/orders/{order_id}/pay"))
-
-    #print(f"Successfully reserved court {court} at {time} on {date} for {sport}. Check for confirmation email at {email}")
     driver.quit()
 
 
