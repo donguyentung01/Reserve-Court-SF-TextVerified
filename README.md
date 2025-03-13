@@ -27,6 +27,5 @@ Run Python main script through Docker image with arguments
 docker run --rm pickleball -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" -t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" -n "<Twilio phone number>" -a "<Twilio AuthToken>" -i "<Twilio SID>"
 ```
 
-The script automatically chooses the longest timeslot available. 
 
 
