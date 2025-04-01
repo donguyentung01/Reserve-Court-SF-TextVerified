@@ -17,14 +17,8 @@ Here is the recommended Shortcuts automation task setup:
 
 ## How to run
 
-Build a Docker image
 ```
-docker build -t pickleball .
-
-```
-Run Python main script through Docker image with arguments
-```
-docker run --rm pickleball -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" -t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" -n "<Twilio phone number>" -a "<Twilio AuthToken>" -i "<Twilio SID>" -r "<datetime to run script>" -m
+python3 main.py -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" -t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" -n "<Twilio phone number>" -a "<Twilio AuthToken>" -i "<Twilio SID>" -r "<datetime to run script>" -m
 ```
 
 
