@@ -14,13 +14,15 @@ import time as t
 import requests
 import json
 import concurrent.futures
+import pytz 
+
+TIMEZONE = pytz.timezone("America/Los_Angeles") #all times are in San Francisco. 
 
 def wait_for_target_time(target_timestamp, sleep_itvl=0.1):
-    #target_timestamp = "2025-03-05 5:40:00"
     print(f"waiting for target time: {target_timestamp}")
-    target_time = datetime.strptime(target_timestamp, "%Y-%m-%d %H:%M:%S")
-    while datetime.now() < target_time:
-        time_to_wait = (target_time - datetime.now()).total_seconds()
+    target_time = TIMEZONE.localize(datetime.strptime(target_timestamp, "%Y-%m-%d %H:%M:%S"))
+    while datetime.now(TIMEZONE) < target_time:
+        time_to_wait = (target_time - datetime.now(TIMEZONE)).total_seconds()
         if time_to_wait > 0:
             t.sleep(min(time_to_wait, sleep_itvl))  # Sleep in small increments
 
@@ -29,7 +31,7 @@ def spawn_driver(weblink): #create a web driver at the weblink provided
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chromedriver_path = '/usr/bin/chromedriver' 
+    chromedriver_path = './chromedriver' 
     driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options) 
     driver.get(weblink)
     return driver 
@@ -153,15 +155,20 @@ def log_in(driver, email, password):
         sys.exit(1)
 
 def get_court_href(driver, court):
-    element = WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located(
-        (By.XPATH, f"//a[p[text()='{court}']]")
+    try:
+        element = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located(
+            (By.XPATH, f"//a[p[text()='{court}']]")
+            )
         )
-    )
 
-    href_link = element.get_attribute("href")
+        href_link = element.get_attribute("href")
 
-    return href_link
+        return href_link
+    except Exception as e:
+        print(f"Error: {e}")
+        print("Error: Failed at getting court href")
+        sys.exit(1)
 
 def make_get_court_info_request(url):
     response = requests.get(url)
@@ -195,6 +202,7 @@ def make_user_profile_request(headers, url="https://api.rec.us/v1/users/househol
 def reserve_court_single_thread(court_id, user_id, date, start_time, end_time, headers):
     job_begin_time = t.time()
     response = make_reservation_request(headers, court_id, user_id, date, start_time, end_time)
+    print(response)
     
     if "order" in response:
         order_id = response["order"]["id"]
@@ -205,8 +213,9 @@ def reserve_court_single_thread(court_id, user_id, date, start_time, end_time, h
             job_end_time = t.time()
             print(f"Reservation job for court {court_id} took {job_end_time - job_begin_time} seconds.")
             return True
+        
     return False
-def book_court(court, date, sport, start_time, end_time, email, password, twilio_account_sid, twilio_auth_token, twilio_phone_number, slot, target_time=f"{datetime.today().strftime('%Y-%m-%d')} 12:00:00"): 
+def book_court(court, date, sport, start_time, end_time, email, password, twilio_account_sid, twilio_auth_token, twilio_phone_number, slot, is_multithreaded, target_time=f"{datetime.today().strftime('%Y-%m-%d')} 12:00:00"): 
     sports_URL_code = {
         "pickleball": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
         "tennis": "bd745b6e-1dd6-43e2-a69f-06f094808a96"
@@ -216,6 +225,7 @@ def book_court(court, date, sport, start_time, end_time, email, password, twilio
 
     log_in(driver, email, password)
     t.sleep(2)
+    print("Logged in successfully")
     headers = getHeaders(driver) 
 
     court_info_api_endpoint = f"https://api.rec.us/v1/{get_court_href(driver, court)[19:]}"
@@ -230,37 +240,37 @@ def book_court(court, date, sport, start_time, end_time, email, password, twilio
 
     wait_for_target_time(preemptive_verification_code_target_time) 
 
-    make_send_verification_code_request(headers)
+    print(make_send_verification_code_request(headers))
     verification_code = get_code(twilio_account_sid, twilio_auth_token, twilio_phone_number) 
 
     wait_for_target_time(target_time)    
-    make_verification_request(verification_code, headers)
+    print(make_verification_request(verification_code, headers))
     
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = []
-        for court_id in all_court_ids:
-            futures.append(executor.submit(reserve_court_single_thread, court_id, user_id, date, start_time, end_time, headers))
+    if is_multithreaded:
+        print("Running reservation program on multi-threads (1 thread per court)")
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = []
+            for court_id in all_court_ids:
+                futures.append(executor.submit(reserve_court_single_thread, court_id, user_id, date, start_time, end_time, headers))
 
-        # Wait for all futures to complete
-        for future in concurrent.futures.as_completed(futures):
-            if future.result():  # If reservation was successful
-                driver.quit()
-                sys.exit(0)
-    '''
-    job_begin_time = t.time()
-    for court_id in all_court_ids:
-        response = make_reservation_request(headers, court_id, user_id, date, start_time, end_time)
-        if "order" in response: 
-            order_id = response["order"]["id"]
-            payment_status = make_payment_request(f"https://api.rec.us/v1/orders/{order_id}/pay", headers)
-            if payment_status["data"]["status"] == "succeeded":
-                print(f"Successfully reserve court {court} from {start_time} to {end_time}")
-                job_end_time = t.time()
-                print(f"Reservation job takes {job_end_time - job_begin_time} seconds.")
-                sys.exit(0)
-    '''
+            # Wait for all futures to complete
+            for future in concurrent.futures.as_completed(futures):
+                if future.result():  # If reservation was successful
+                    driver.quit()
+                    sys.exit(0)
+    else:
+        print("Running reservation program on one single thread")
+        job_begin_time = t.time()
+        for court_id in all_court_ids:
+            response = make_reservation_request(headers, court_id, user_id, date, start_time, end_time)
+            if "order" in response: 
+                order_id = response["order"]["id"]
+                payment_status = make_payment_request(f"https://api.rec.us/v1/orders/{order_id}/pay", headers)
+                if payment_status["data"]["status"] == "succeeded":
+                    print(f"Successfully reserve court {court} from {start_time} to {end_time}")
+                    job_end_time = t.time()
+                    print(f"Reservation job takes {job_end_time - job_begin_time} seconds.")
+                    sys.exit(0)
+
     print(f"Couldn't reserve the court")
     driver.quit()
-
-
-
