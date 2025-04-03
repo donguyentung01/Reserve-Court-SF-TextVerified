@@ -58,7 +58,7 @@ The script used multi-threading to paralellize sending HTTP requests, optimizing
 ### Researching HTTP request 
 There is no official documentation on how [rec.us](https://www.rec.us/) APIs work. So I had to manually inspect the network tab on my browser to figure out what HTTP endpoints are being used. 
 
-One particular challenge is that all the HTTP request headers are sent with Authorization attribute set to "bearer <access_token>". This access token has to be retrieved from the Cookies. Without the access token, the requests will be invalidated. 
+One particular challenge is that all the HTTP request headers are sent with Authorization attribute set to "bearer <access_token>". This access token is stored in a session cookie, and has to be retrieved from the Cookies section after the user logs in. Without the access token, the requests will be invalidated. 
 
 ### Rec.us blocking virtual number
 [rec.us](https://www.rec.us/) blocks virtual number, which means you cannot directly use a Twilio number for the script. I have to set up an Automation task on my personal phone to forward the verification code to my Twilio number. 
