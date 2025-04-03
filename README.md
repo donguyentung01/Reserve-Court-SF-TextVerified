@@ -60,6 +60,9 @@ There is no official documentation on how [rec.us](https://www.rec.us/) APIs wor
 
 One particular challenge is that all the HTTP request headers are sent with Authorization attribute set to "bearer <access_token>". This access token has to be retrieved from the Cookies. Without the access token, the requests will be invalidated. 
 
+### Rec.us blocking virtual number
+[rec.us](https://www.rec.us/) blocks virtual number, which means you cannot directly use a Twilio number for the script. I have to set up an Automation task on my personal phone to forward the verification code to my Twilio number. 
+
 ## Prerequisites
 
 You need to have an existing account with [rec.us](https://www.rec.us/). As of Feb 2025, [rec.us](https://www.rec.us/) blocks virtual numbers (like those created on Twilio, e.g.), so you need to use a real phone number for the registration (as opposed to a virtual number like on Twilio). 
