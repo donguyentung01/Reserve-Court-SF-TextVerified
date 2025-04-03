@@ -37,7 +37,7 @@ The script is currently deployed on AWS EC2 and scheduled to run daily right bef
 ### Use API instead of web-crawling
 The original version of this script simply uses web-crawling with Selenium to reserve the courts. This means that the script navigates the website just like a human user. However, this results in many failed attempts at court reservation, since the script is not fast enough. 
 
-Afterwards, I switched from web-crawling to directly using the website's APIs. This approach eliminates a huge amount of time that was previously used for navigating/clicking buttons. 
+Afterwards, I switched from web-crawling to directly using the website's APIs. This approach eliminates 5-6 seconds of runtime that were previously used for navigating/clicking buttons. 
 
 ### Request verification code preemptively
 After experimenting with the verification code mechanism on [rec.us](https://www.rec.us/), I discovered that the verification code can remain valid for up to 1 minute. So instead of waiting until the court opening to request the verification code, we can request it right before the court opening, so we can save some extra runtime during the actual reservation. 
