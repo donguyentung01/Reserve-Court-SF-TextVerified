@@ -30,6 +30,4 @@ if __name__ == "__main__":
         print("Sport must be either 'pickleball' or 'tennis'") 
         sys.exit(1)
 
-    print("Arguments passed to the script:", sys.argv) 
-
     book_court(court, date, sport, start_time, end_time, email, password, sid, auth_token, phone_number, slot, is_multithreaded, target_time) 
