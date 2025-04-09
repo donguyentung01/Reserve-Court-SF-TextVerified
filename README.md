@@ -28,8 +28,9 @@ The script should be able to:
 
 - The script uses Selenium to open and log in to [rec.us](https://www.rec.us/) 2 minutes before the registration opens. Then it retrieves the access token from Cookies--the access token will be attached to all HTTP requests' headers later on. 
 
-<img width="946" alt="Screenshot 2025-04-09 at 1 28 32 PM" src="https://github.com/user-attachments/assets/8f8ed1e1-3816-4407-93a6-9073630eb5b9" />
-
+| !<img width="946" alt="Screenshot 2025-04-09 at 1 28 32 PM" src="https://github.com/user-attachments/assets/8f8ed1e1-3816-4407-93a6-9073630eb5b9" /> | 
+|:--:| 
+| *Access token stored in Cookies* |
 
 - 1 minute before the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/send to ask for a mobile verification code. The phone number used for SMS verification must be non-VOIP and needs to be automatically forwarded to the designated Flask webhook endpoint at http://54.183.149.104:5000/webhook (hosted on a running AWS EC2 instance). We recommend using [SMSPool](https://www.smspool.net/) to rent a phone number and set up the necessary webhook. 
 
@@ -41,9 +42,9 @@ The script should be able to:
 
 - As soon as the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/verify with the verication code in the request body. 
 
-After confirming that the verification code is correct, submit an HTTP request at https://api.rec.us/v1/reservations with all the information about court, timeslot, etc in the request body. 
+- After confirming that the verification code is correct, submit an HTTP request at https://api.rec.us/v1/reservations with all the information about court, timeslot, etc in the request body. 
 
-If the returned response is OK, then we have successfully reserved the court. 
+- If the returned response is OK, then we have successfully reserved the court. 
 
 The script is currently deployed on AWS EC2 and scheduled to run daily right before court reservation opens, using the EC2 crontab. 
 
