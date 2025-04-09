@@ -35,7 +35,8 @@ The script should be able to:
 
 - The Flask endpoint will store the SMS mobile verification in a log file. The script polls another Flask endpoint (on the same AWS EC2 instance) to find the verification code in the said log file.
 
-<img width="938" alt="Screenshot 2025-04-09 at 1 40 55 PM" src="https://github.com/user-attachments/assets/c644a95b-058c-459b-8099-663eeeae3e38" />
+| !<img width="938" alt="Screenshot 2025-04-09 at 1 40 55 PM" src="https://github.com/user-attachments/assets/c644a95b-058c-459b-8099-663eeeae3e38" /> |
+|:--:| 
 | *Flask endpoint retrieving a verification code* |
 
 - As soon as the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/verify with the verication code in the request body. 
