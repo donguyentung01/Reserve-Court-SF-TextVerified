@@ -1,50 +1,38 @@
-
+import requests
 import time
-from twilio.rest import Client
-from datetime import datetime, timezone
 
-def get_code(account_sid, auth_token, phone_number, timeout=30, poll_interval=1, max_age_seconds=60):
+def get_code(phone_number, webhook="http://54.183.149.104:5000/", timeout=30, poll_interval=1, max_age=60):
     """
-    Fetches the most recent verification code sent to the given phone number that was received
-    within the last max_age_seconds
-    
-    Parameters:
-    - account_sid: Twilio Account SID
-    - auth_token: Twilio Auth Token
-    - phone_number: Phone number to check for messages
-    - timeout: Maximum time to wait for a message (in seconds)
-    - poll_interval: Interval between each polling attempt (in seconds)
-    - max_age_seconds: Maximum age of the message in seconds (default is 60 seconds)
-    
-    Returns:
-    - latest_message.body: The body of the most recent message received within the specified time
+    Polls the webhook for the verification code for a given phone number.
+
+    :param phone_number: The phone number to search for in the webhook logs.
+    :param webhook: The base URL of the webhook (default: "http://54.183.149.104:5000/").
+    :param timeout: The maximum time to wait (in seconds) before giving up.
+    :param poll_interval: The interval (in seconds) to wait between polling attempts.
+    :param max_age: The maximum age of the record to look for (in seconds).
+    :return: The verification code if found, or -1 if not found within the timeout.
     """
-
-    client = Client(account_sid, auth_token)
-
-    # Time when we start polling
-    start_time = time.time()
-
-    while True:
-        # Fetch the most recent SMS message
-        messages = client.messages.list(to=phone_number, limit=1)  # limit=1 fetches the most recent message
+    
+    start_time = time.time()  # Record the start time to track timeout
+    
+    while time.time() - start_time < timeout:
+        try:
+            # Build the request URL
+            url = f"{webhook}get_verification_code?phonenumber={phone_number}&maxage={max_age}"
+            response = requests.get(url, timeout=poll_interval)
+            
+            # If the request is successful and we get a valid response
+            if response.status_code == 200:
+                data = response.json()
+                # If the response contains the verification code
+                if 'verification_code' in data:
+                    return data['verification_code']
         
-        # If we have found a message, check if it was received within the last `max_age_seconds`
-        if messages:
-            latest_message = messages[0]
-            message_sent_time = latest_message.date_sent
-
-            current_time = datetime.utcnow().replace(tzinfo=timezone.utc) 
-
-            # Check if the message was sent within the last `max_age_seconds`
-            if message_sent_time and (current_time - message_sent_time).total_seconds() <= max_age_seconds:
-                return latest_message.body
+        except requests.RequestException:
+            pass  # Ignore exceptions and continue retrying
         
-        # Check if the timeout has been reached
-        if time.time() - start_time > timeout:
-            print("Timeout reached. No valid message received within the specified time frame.")
-            return -1  
-        
-        # Wait for the specified polling interval before checking again
+        # Wait for the specified poll interval before retrying
         time.sleep(poll_interval)
-
+    
+    # If no verification code is found within the timeout, return -1
+    return -1

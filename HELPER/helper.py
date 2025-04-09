@@ -196,11 +196,10 @@ def make_user_profile_request(headers, url="https://api.rec.us/v1/users/househol
         data = response.json()
         return data
     else:
-        print(f"Request failed with status code: {response.status_code}")
+        print(f"Request failed with status code: {response.status_code} and {response.json()}")
         return None 
 
-def reserve_court_single_thread(court_id, user_id, date, start_time, end_time, headers):
-    job_begin_time = t.time()
+def reserve_court_single_thread(court_id, user_id, date, start_time, end_time, headers, job_begin_time):
     response = make_reservation_request(headers, court_id, user_id, date, start_time, end_time)
     print(response)
     
@@ -215,17 +214,17 @@ def reserve_court_single_thread(court_id, user_id, date, start_time, end_time, h
             return True
         
     return False
-def book_court(court, date, sport, start_time, end_time, email, password, twilio_account_sid, twilio_auth_token, twilio_phone_number, slot, is_multithreaded, target_time=f"{datetime.today().strftime('%Y-%m-%d')} 12:00:00"): 
+def book_court(court, date, sport, start_time, end_time, email, password, phone_number, is_multithreaded, target_time=f"{datetime.today().strftime('%Y-%m-%d')} 12:00:00"): 
     sports_URL_code = {
         "pickleball": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
         "tennis": "bd745b6e-1dd6-43e2-a69f-06f094808a96"
     }
-    
-    driver = spawn_driver(f"https://www.rec.us/organizations/san-francisco-rec-park?tab=locations&date={date}&time={slot}&sports={sports_URL_code[sport]}")
+    print(f"Spawning Chrome driver at https://www.rec.us/organizations/san-francisco-rec-park?tab=locations&date={date}&sports={sports_URL_code[sport]}")
+    driver = spawn_driver(f"https://www.rec.us/organizations/san-francisco-rec-park?tab=locations&date={date}&sports={sports_URL_code[sport]}")
 
     log_in(driver, email, password)
-    t.sleep(2)
-    print("Logged in successfully")
+    t.sleep(1)
+
     headers = getHeaders(driver) 
 
     court_info_api_endpoint = f"https://api.rec.us/v1/{get_court_href(driver, court)[19:]}"
@@ -241,9 +240,11 @@ def book_court(court, date, sport, start_time, end_time, email, password, twilio
     wait_for_target_time(preemptive_verification_code_target_time) 
 
     print(make_send_verification_code_request(headers))
-    verification_code = get_code(twilio_account_sid, twilio_auth_token, twilio_phone_number) 
+    verification_code = get_code(phone_number) 
 
     wait_for_target_time(target_time)    
+    
+    job_begin_time = t.time()
     print(make_verification_request(verification_code, headers))
     
     if is_multithreaded:
@@ -251,7 +252,7 @@ def book_court(court, date, sport, start_time, end_time, email, password, twilio
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = []
             for court_id in all_court_ids:
-                futures.append(executor.submit(reserve_court_single_thread, court_id, user_id, date, start_time, end_time, headers))
+                futures.append(executor.submit(reserve_court_single_thread, court_id, user_id, date, start_time, end_time, headers, job_begin_time))
 
             # Wait for all futures to complete
             for future in concurrent.futures.as_completed(futures):
@@ -260,7 +261,6 @@ def book_court(court, date, sport, start_time, end_time, email, password, twilio
                     sys.exit(0)
     else:
         print("Running reservation program on one single thread")
-        job_begin_time = t.time()
         for court_id in all_court_ids:
             response = make_reservation_request(headers, court_id, user_id, date, start_time, end_time)
             if "order" in response: 
