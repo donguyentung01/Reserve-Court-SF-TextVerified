@@ -48,7 +48,12 @@ The script should be able to:
 
 - After confirming that the verification code is correct, submit an HTTP request at https://api.rec.us/v1/reservations with all the information about court, timeslot, etc in the request body. 
 
-- If the returned response is OK, then we have successfully reserved the court. 
+- If the returned response is OK, then we have successfully reserved the court.
+  
+| !<img width="551" alt="Screenshot 2025-04-09 at 1 48 32 PM" src="https://github.com/user-attachments/assets/a04f6086-059f-41b8-bcb1-a399d2aaf35d" /> | 
+|:--:| 
+| *Court reserved successfully* |
+
 
 The script is currently deployed on AWS EC2 and scheduled to run daily right before court reservation opens, using the EC2 crontab. 
 
