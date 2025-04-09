@@ -22,7 +22,7 @@ The script should be able to:
 
 The script uses Selenium to open and log in to [rec.us](https://www.rec.us/) 2 minutes before the registration opens. Then it retrieves the access token from Cookies--the access token will be attached to all HTTP requests' headers later on. 
 
-1 minute before the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/send to ask for a mobile verification code. This verification code lasts for 1 minute. The verification will then be forwarded from my personal number to my Twilio number. The script polls the Twilio number to see if there is any incoming message within the last minute. Retrieve the verification number if there is one. 
+1 minute before the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/send to ask for a mobile verification code. This verification code lasts for 1 minute. The verification will then be forwarded to a Flask webhook endpoint hosted on an AWS EC2 instance. The script polls the Flask endpoint to see if there is any incoming message within the last minute. Retrieve the verification number if there is one. 
 
 As soon as the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/verify with the verication code in the request body. 
 
@@ -40,7 +40,7 @@ The original version of this script simply uses web-crawling with Selenium to re
 Afterwards, I switched from web-crawling to directly using the website's APIs. This approach eliminates 5-6 seconds of runtime that were previously used for navigating/clicking buttons. 
 
 ### Request verification code preemptively
-After experimenting with the verification code mechanism on [rec.us](https://www.rec.us/), I discovered that the verification code can remain valid for up to 1 minute. So instead of waiting until the court opening to request the verification code, we can request it right before the court opening, so we can save some extra runtime during the actual reservation. 
+After experimenting with the verification code mechanism on [rec.us](https://www.rec.us/), I discovered that the verification code can remain valid for up to 2 minutes. So instead of waiting until the court opening to request the verification code, we can request it right before the court opening, so we can save some extra runtime during the actual reservation. 
 
 ### Sending requests to multiple courts concurrently 
 Each main court usually has multiple sub-courts. For example, Alice Marble has 4 different tennis courts. Each of the court registration would require a separate HTTP request at https://api.rec.us/v1/reservations. 
@@ -61,20 +61,13 @@ There is no official documentation on how [rec.us](https://www.rec.us/) APIs wor
 One particular challenge is that all the HTTP request headers are sent with Authorization attribute set to "bearer <access_token>". This access token is stored in a session cookie, and has to be retrieved from the Cookies section after the user logs in. Without the access token, the requests will be invalidated. 
 
 ### Rec.us blocking virtual number
-[rec.us](https://www.rec.us/) blocks virtual number, which means you cannot directly use a Twilio number for the script. I have to set up an Automation task on my personal phone to forward the verification code to my Twilio number. 
+[rec.us](https://www.rec.us/) blocks virtual number, which means you have to get a non-VOIP number and set up a webhook to my Flask endpoint on an AWS EC2 instance, which can handle verification messages.
 
 ## Prerequisites
 
-You need to have an existing account with [rec.us](https://www.rec.us/). As of Feb 2025, [rec.us](https://www.rec.us/) blocks virtual numbers (like those created on Twilio, e.g.), so you need to use a real phone number for the registration (as opposed to a virtual number like on Twilio). 
+You need to have an existing account with [rec.us](https://www.rec.us/). As of Feb 2025, [rec.us](https://www.rec.us/) blocks virtual numbers (like those created on Twilio, e.g.), so you need to use a non-VOIP number. 
 
-You also need to create a Twilio virtual number, so that you can set up a Shortcuts automation task on your registered iPhone number to forward the text verification code, which is required for every court reservation, to the Twilio number. The text on your Twilio number is then retrieved by the Python script.
-
-Here is the recommended Shortcuts automation task setup: 
-
-
-<img src="https://github.com/user-attachments/assets/d5562b2e-7d19-40d6-802d-574830293341" width="300" />
-<img src="https://github.com/user-attachments/assets/34a0cc39-f1df-4e55-81b3-fa006dbe8069" width="300" />
-
+The easiest way to set this up is to rent a phone number on [https://www.smspool.net/purchase/rental](SMSPool). Afterwards, [set up the webhook endpoint](https://www.smspool.net/article/how-to-setup-webhooks-for-smspool-ec19b80ade92) at http://54.183.149.104:5000/webhook, which is hosted on an AWS EC2 instance, to automatically send verification messages to the backend. 
 
 ## How to run
 
@@ -85,7 +78,7 @@ pip3 install -r requirements.txt
 
 Run main.py script 
 ```
-python3 main.py -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" -t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" -n "<Twilio phone number>" -a "<Twilio AuthToken>" -i "<Twilio SID>" -r "<datetime to run script>" -m
+python3 main.py -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" -t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" -n "<SMSPool phone number>" -r "<datetime to run script>" -m
 ```
 
 
