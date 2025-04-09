@@ -33,7 +33,7 @@ The script should be able to:
 | *Access token stored in Cookies* |
 
 - 1 minute before the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/send to ask for a mobile verification code. The phone number used for SMS verification must be non-VOIP and needs to be automatically forwarded to the designated Flask webhook endpoint at http://54.183.149.104:5000/webhook (hosted on a running AWS EC2 instance). We recommend using [SMSPool](https://www.smspool.net/) to rent a phone number and set up the necessary webhook.
-|! <img width="885" alt="Screenshot 2025-04-09 at 1 45 49 PM" src="https://github.com/user-attachments/assets/3c10f934-e289-4f7d-b304-3e86df2cd160" /> |
+| !<img width="885" alt="Screenshot 2025-04-09 at 1 45 49 PM" src="https://github.com/user-attachments/assets/3c10f934-e289-4f7d-b304-3e86df2cd160" /> |
 |:--:| 
 | *Flask endpoint retrieving the log file* |
 
