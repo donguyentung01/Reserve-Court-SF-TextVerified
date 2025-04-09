@@ -39,7 +39,9 @@ pip3 install -r requirements.txt
 
 Run main.py script 
 ```
-python3 main.py -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" -t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" -n "<SMSPool phone number>" -r "<datetime to run script>" -m
+python3 main.py -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" \
+-t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" \
+-n "<SMSPool phone number>" -r "<datetime to run script>" -m
 ```
 
 ## Implementation
