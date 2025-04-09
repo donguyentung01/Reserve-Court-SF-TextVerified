@@ -28,6 +28,9 @@ The script should be able to:
 
 The script uses Selenium to open and log in to [rec.us](https://www.rec.us/) 2 minutes before the registration opens. Then it retrieves the access token from Cookies--the access token will be attached to all HTTP requests' headers later on. 
 
+<img width="946" alt="Screenshot 2025-04-09 at 1 28 32 PM" src="https://github.com/user-attachments/assets/8f8ed1e1-3816-4407-93a6-9073630eb5b9" />
+
+
 1 minute before the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/send to ask for a mobile verification code. This verification code lasts for 1 minute. The verification will then be forwarded to a Flask webhook endpoint hosted on an AWS EC2 instance. The script polls the Flask endpoint to see if there is any incoming message within the last minute. Retrieve the verification number if there is one. 
 
 As soon as the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/verify with the verication code in the request body. 
