@@ -15,6 +15,7 @@ There are 3 main issues with reserving the courts manually:
 - You have to click/navigate the website really fast as soon as the registration opens, since a lot of players will also try to reserve the same courts. Courts will usually be fully reserved within 5-10 seconds after opening.
 - Court registration requires SMS mobile verification, which can take more time to reserve manually
 <img width="552" alt="Screenshot 2025-04-09 at 1 25 24 PM" src="https://github.com/user-attachments/assets/aa29861b-c881-4488-b3a0-a47b44643700" />
+
 - The court registration times are not always convenient. For example, Alice Marble's registration opens at 8:00 AM, which may be too early for some people.
 
 ## Project Goal 
