@@ -24,6 +24,24 @@ The script should be able to:
 - Reserve a given court at a given timeslot. 
 - Outperform non-scripting users in terms of runtime. Ideally also outperform other script users. 
 
+## Prerequisites
+
+You need to have an existing account with [rec.us](https://www.rec.us/) or create an account otherwise. As of Feb 2025, [rec.us](https://www.rec.us/) blocks virtual numbers (like those created on Twilio, e.g.), so you need to use a non-VOIP number. 
+
+The easiest way to set this up is to rent a phone number on [https://www.smspool.net/purchase/rental](SMSPool). Afterwards, [set up the webhook endpoint](https://www.smspool.net/article/how-to-setup-webhooks-for-smspool-ec19b80ade92) at http://54.183.149.104:5000/webhook, which is hosted on an AWS EC2 instance, to automatically send verification messages to the backend. 
+
+## How to run
+
+Install dependencies 
+```
+pip3 install -r requirements.txt 
+```
+
+Run main.py script 
+```
+python3 main.py -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" -t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" -n "<SMSPool phone number>" -r "<datetime to run script>" -m
+```
+
 ## Implementation
 
 - The script uses Selenium to open and log in to [rec.us](https://www.rec.us/) 2 minutes before the registration opens. Then it retrieves the access token from Cookies--the access token will be attached to all HTTP requests' headers later on. 
@@ -88,22 +106,5 @@ One particular challenge is that all the HTTP request headers are sent with Auth
 ### Rec.us blocking virtual number
 [rec.us](https://www.rec.us/) blocks virtual number, which means you have to get a non-VOIP number and set up a webhook to my Flask endpoint on an AWS EC2 instance, which can handle verification messages.
 
-## Prerequisites
-
-You need to have an existing account with [rec.us](https://www.rec.us/). As of Feb 2025, [rec.us](https://www.rec.us/) blocks virtual numbers (like those created on Twilio, e.g.), so you need to use a non-VOIP number. 
-
-The easiest way to set this up is to rent a phone number on [https://www.smspool.net/purchase/rental](SMSPool). Afterwards, [set up the webhook endpoint](https://www.smspool.net/article/how-to-setup-webhooks-for-smspool-ec19b80ade92) at http://54.183.149.104:5000/webhook, which is hosted on an AWS EC2 instance, to automatically send verification messages to the backend. 
-
-## How to run
-
-Install dependencies 
-```
-pip3 install -r requirements.txt 
-```
-
-Run main.py script 
-```
-python3 main.py -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" -t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" -n "<SMSPool phone number>" -r "<datetime to run script>" -m
-```
 
 
