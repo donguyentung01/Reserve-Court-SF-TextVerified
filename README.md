@@ -37,12 +37,18 @@ Install dependencies
 pip3 install -r requirements.txt 
 ```
 
-Run main.py script 
+Run `main.py` script 
+
 ```
 python3 main.py -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" \
 -t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" \
 -n "<SMSPool phone number>" -r "<date/time when court registration opens>" -m
 ```
+
+For example, if I want to reserve court Alice Marble from 6:00PM to 7:30PM on 2025-04-09. Alice Marble registration opens 7 days in advance at 8AM, which means the registration time is 8AM on 2025-04-02. Lastly, assume my account is john.doe@gmail.com, my password is 12345678, and my phone number is +1 (484)-567-8901. Then I should run this command about 2 minutes before the registration opens (around 07:58:00 on 2025-04-02):
+
+`python3 main.py -c "Alice Marble" -d 2025-04-09 -s tennis -t 18:00:00 -y 19:30:00 -e john.doe@gmail.com -p 12345678 -n 14845678901 -r "2025-04-02 08:00:00" -m`
+
 
 ## Implementation
 
