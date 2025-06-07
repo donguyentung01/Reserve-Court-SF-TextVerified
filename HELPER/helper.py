@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys  
 from selenium.webdriver.common.action_chains import ActionChains
-from HELPER.messages import get_code
+from HELPER.get_code import get_latest_verification_code 
 from datetime import datetime, timedelta
 import sys  
 import time as t
@@ -31,7 +31,7 @@ def spawn_driver(weblink): #create a web driver at the weblink provided
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chromedriver_path = './chromedriver' 
+    chromedriver_path = './chromedriver-linux' 
     driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options) 
     driver.get(weblink)
     return driver 
@@ -87,6 +87,7 @@ def get_access_token(driver):
 
 def getHeaders(driver):
     access_token = get_access_token(driver)
+    print(f"access token is {access_token}")
     if access_token:
         headers = {
             'Authorization': f'Bearer {access_token}',
@@ -214,7 +215,8 @@ def reserve_court_single_thread(court_id, user_id, date, start_time, end_time, h
             return True
         
     return False
-def book_court(court, date, sport, start_time, end_time, email, password, phone_number, is_multithreaded, target_time=f"{datetime.today().strftime('%Y-%m-%d')} 12:00:00"): 
+
+def book_court(court, date, sport, start_time, end_time, email, password, phone_number, username, api_key, is_multithreaded, target_time=f"{datetime.today().strftime('%Y-%m-%d')} 12:00:00"): 
     sports_URL_code = {
         "pickleball": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
         "tennis": "bd745b6e-1dd6-43e2-a69f-06f094808a96"
@@ -240,12 +242,12 @@ def book_court(court, date, sport, start_time, end_time, email, password, phone_
     wait_for_target_time(preemptive_verification_code_target_time) 
 
     print(make_send_verification_code_request(headers))
-    verification_code = get_code(phone_number) 
+    verification_code = get_latest_verification_code(username, api_key, phone_number)
+    print(make_verification_request(verification_code, headers))
 
     wait_for_target_time(target_time)    
     
     job_begin_time = t.time()
-    print(make_verification_request(verification_code, headers))
     
     if is_multithreaded:
         print("Running reservation program on multi-threads (1 thread per court)")
