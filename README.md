@@ -28,7 +28,7 @@ The script should be able to:
 
 You need to have an existing account with [rec.us](https://www.rec.us/) or create an account otherwise. Each account is associated with a phone number, as each registration requires SMS mobile verification. As of Feb 2025, [rec.us](https://www.rec.us/) blocks virtual numbers (like those created on Twilio, e.g.), so you need to use a non-VOIP number for your account. Do not use your personal number, as it can get difficult to integrate with the script. 
 
-You should rent a phone number on [https://www.textverified.com/](TextVerified). You also need to have your API key (under the [https://www.textverified.com/app/api/configure](API) section). 
+You should rent a phone number on [TextVerified](https://www.textverified.com/). You also need to have your API key (under the [API](https://www.textverified.com/app/api/configure) section). 
 
 ## How to run
 
