@@ -28,7 +28,7 @@ The script should be able to:
 
 You need to have an existing account with [rec.us](https://www.rec.us/) or create an account otherwise. Each account is associated with a phone number, as each registration requires SMS mobile verification. As of Feb 2025, [rec.us](https://www.rec.us/) blocks virtual numbers (like those created on Twilio, e.g.), so you need to use a non-VOIP number for your account. Do not use your personal number, as it can get difficult to integrate with the script. 
 
-You should rent a phone number on [https://www.smspool.net/purchase/rental](SMSPool). Afterwards, [set up the webhook endpoint](https://www.smspool.net/article/how-to-setup-webhooks-for-smspool-ec19b80ade92) to automatically send verification messages to the Flask endpoint http://54.183.149.104:5000/webhook, which is hosted on an AWS EC2 instance
+You should rent a phone number on [https://www.textverified.com/](TextVerified). You also need to have your API key (under the [https://www.textverified.com/app/api/configure](API) section). 
 
 ## How to run
 
@@ -42,12 +42,12 @@ Run `main.py` script
 ```
 python3 main.py -c "<Court>" -d "<Date>" -s "<sport, either pickleball or tennis>" \
 -t "<start_time>" -y <end_time> -e "<rec.us account>" -p "<rec.us password>" \
--n "<SMSPool phone number>" -r "<date/time when court registration opens>" -m
+-n "<TextVerified phone number>" -u "<TextVerified username>" -a "<TextVerified API Key>" -r "<date/time when court registration opens>" -m
 ```
 
-For example, let's say we want to reserve court Alice Marble from 6:00PM to 7:30PM on 2025-04-09. Alice Marble registration opens 7 days in advance at 8AM, which means the registration time is 8AM on 2025-04-02. Lastly, assume my account is john.doe@gmail.com, my password is 12345678, and my phone number is +1 (484)-567-8901. Then I should run this command about 2 minutes before the registration opens (around 07:58:00 on 2025-04-02):
+For example, let's say we want to reserve court Alice Marble from 6:00PM to 7:30PM on 2025-04-09. Alice Marble registration opens 7 days in advance at 8AM, which means the registration time is 8AM on 2025-04-02. Lastly, assume my account is john.doe@gmail.com, my password is 12345678, my TextVerified phone number is (484)-567-8901, my TextVerified username is john.doe@gmail.com. and my TextVerified API Key is 1234. Then I should run this command about 2 minutes before the registration opens (around 07:58:00 on 2025-04-02):
 
-`python3 main.py -c "Alice Marble" -d 2025-04-09 -s tennis -t 18:00:00 -y 19:30:00 -e john.doe@gmail.com -p 12345678 -n 14845678901 -r "2025-04-02 08:00:00" -m`
+`python3 main.py -c "Alice Marble" -d 2025-04-09 -s tennis -t 18:00:00 -y 19:30:00 -e john.doe@gmail.com -p 12345678 -n 4845678901 -u john.doe@gmail.com -a 1234 -r "2025-04-02 08:00:00" -m`
 
 
 ## Implementation
@@ -58,17 +58,9 @@ For example, let's say we want to reserve court Alice Marble from 6:00PM to 7:30
 |:--:| 
 | *Access token stored in Cookies* |
 
-- 1 minute before the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/send to ask for a mobile verification code. The phone number used for SMS verification must be non-VOIP and needs to be automatically forwarded to the designated Flask webhook endpoint at http://54.183.149.104:5000/webhook (hosted on a running AWS EC2 instance). We recommend using [SMSPool](https://www.smspool.net/) to rent a phone number and set up the necessary webhook.
+- 1 minute before the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/send to ask for a mobile verification code.
   
-| !<img width="885" alt="Screenshot 2025-04-09 at 1 45 49 PM" src="https://github.com/user-attachments/assets/3c10f934-e289-4f7d-b304-3e86df2cd160" /> |
-|:--:| 
-| *Flask endpoint retrieving the log file* |
-
-- The Flask endpoint will store the SMS mobile verification in a log file. The script polls another Flask endpoint (on the same AWS EC2 instance) to find the verification code in the said log file.
-
-| !<img width="938" alt="Screenshot 2025-04-09 at 1 40 55 PM" src="https://github.com/user-attachments/assets/c644a95b-058c-459b-8099-663eeeae3e38" /> |
-|:--:| 
-| *Flask endpoint retrieving a verification code within the last 60 seconds* |
+- The script makes a GET request to TextVerified SMS endpoint to find the verification code.
 
 - As soon as the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/verify with the verication code in the request body. 
 
@@ -79,7 +71,6 @@ For example, let's say we want to reserve court Alice Marble from 6:00PM to 7:30
 | !<img width="551" alt="Screenshot 2025-04-09 at 1 48 32 PM" src="https://github.com/user-attachments/assets/a04f6086-059f-41b8-bcb1-a399d2aaf35d" /> | 
 |:--:| 
 | *Court reserved successfully* |
-
 
 The script is currently deployed on AWS EC2 and scheduled to run daily right before court reservation opens, using the EC2 crontab. 
 
