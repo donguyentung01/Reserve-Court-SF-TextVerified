@@ -60,7 +60,7 @@ For example, let's say we want to reserve court Alice Marble from 6:00PM to 7:30
 
 - 1 minute before the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/send to ask for a mobile verification code.
   
-- The script makes a GET request to TextVerified SMS endpoint to find the verification code.
+- The script makes a GET request to TextVerified SMS [endpoint](https://www.textverified.com/api/reference#get-/api/pub/v2/sms) to find the verification code.
 
 - As soon as the registration opens, submit an HTTP request at https://api.rec.us/v1/users/mobile-totp/verify with the verication code in the request body. 
 
